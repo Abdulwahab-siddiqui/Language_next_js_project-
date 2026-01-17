@@ -8,7 +8,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,14 +19,15 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Ensure PM2 is installe d
+      - name: Ensure PM2 is installed
         run: |
           if ! command -v pm2 >/dev/null 2>&1; then
             npm install -g pm2
           fi
 
       - name: Install Node Modules
-        run: npm install 
+        run: |
+          npm ci || npm install --legacy-peer-deps
 
       - name: Build
         run: npm run build
