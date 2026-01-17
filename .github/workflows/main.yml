@@ -4,10 +4,11 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, linux]
+    runs-on: [self-hosted, Linux, X64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,6 +17,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Ensure PM2 is installed
         run: |
@@ -24,14 +26,15 @@ jobs:
           fi
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: |
+          npm ci || npm install --legacy-peer-deps
 
       - name: Build
         run: npm run build
 
       - name: Start/Restart PM2
         run: |
-          if pm2 describe language-nextjs >/dev/null; then
+          if pm2 describe language-nextjs > /dev/null 2>&1; then
             pm2 restart language-nextjs --update-env
           else
             pm2 start ecosystem.config.js
