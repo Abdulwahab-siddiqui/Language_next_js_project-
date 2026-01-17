@@ -1,0 +1,14 @@
+{
+  "navigation": {
+    "home": "Home",
+    "about": "About",
+    "services": "Services", 
+    "contact": "Contact",
+    "blog": "Blog"
+  },
+  "common": {
+    "welcome": "Welcome",
+    "language": "Language",
+    "selectLanguage": "Select Language"
+  }
+}

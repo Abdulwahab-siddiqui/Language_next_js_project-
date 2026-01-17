@@ -1,0 +1,74 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy project to EC2 via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          source: .
+          target: ${{ secrets.EC2_PATH }}
+          overwrite: true
+          rm: true
+          exclude: |
+            .git
+            node_modules
+            .next
+            .DS_Store
+
+      - name: Build & restart with PM2 on EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          script: |
+            set -e
+            APP_DIR="${{ secrets.EC2_PATH }}"
+            cd "$APP_DIR"
+
+            # Install Node.js (if missing) and PM2
+            if ! command -v node >/dev/null 2>&1; then
+              # Attempt to install Node.js 20 LTS via nvm
+              if ! command -v nvm >/dev/null 2>&1; then
+                curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+                . "$HOME/.nvm/nvm.sh"
+              else
+                . "$HOME/.nvm/nvm.sh"
+              fi
+              nvm install 20
+              nvm use 20
+            else
+              echo "Node.js already installed"
+            fi
+
+            if ! command -v pm2 >/dev/null 2>&1; then
+              npm install -g pm2
+            fi
+
+            # Install dependencies and build
+            rm -rf node_modules .next
+            npm install --legacy-peer-deps
+            npm run build
+
+            # Start or restart PM2
+            if pm2 describe language-nextjs >/dev/null; then
+              pm2 restart language-nextjs --update-env
+            else
+              pm2 start ecosystem.config.js
+            fi
+            pm2 save

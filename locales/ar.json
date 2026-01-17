@@ -1,0 +1,14 @@
+{
+  "navigation": {
+    "home": "الرئيسية",
+    "about": "حول",
+    "services": "الخدمات",
+    "contact": "اتصل بنا", 
+    "blog": "المدونة"
+  },
+  "common": {
+    "welcome": "مرحباً",
+    "language": "اللغة", 
+    "selectLanguage": "اختر اللغة"
+  }
+}
